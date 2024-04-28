@@ -1,0 +1,196 @@
+<div class="cardContent">
+  <div class="contentArea">
+    <div class="catch">この検索履歴を削除します。</div>
+    <p class="copy copy--caption">※ 一度削除すると、元に戻せません。</p>
+  </div>
+  <div class="actionArea">
+    <a @click="activeDeleteModal = false" class="md_btn md_btn--whiteLine"
+      >キャンセル</a
+    >
+    <a @click="delete_history" class="md_btn md_btn--delete js_modalX"
+      >削除する</a
+    >
+  </div>
+</div>
+,
+<div class="cardContent">
+  <div class="contentArea">
+    <div class="catch">現在の検索条件を保存しますか？</div>
+    <div class="copy" v-if="overwrite_wish_no == 0 || overwrite_wish_no == ''">
+      保存すると、条件にあてはまる新着求人のお知らせを受け取ることができます。
+    </div>
+    <div class="copy" v-else="">
+      現在保存している以下の条件に、上書き保存します。よろしいですか？
+      <p class="savedContents">
+        <span class="set"> {{ overwritten_condition_text }} </span>
+      </p>
+    </div>
+    <div
+      class="md_toggle"
+      v-if="(overwrite_wish_no == 0 || overwrite_wish_no == '') &amp;&amp; $user_info['login'] == true"
+    >
+      <div class="check">
+        <input
+          id="check_nodisplay"
+          name=""
+          type="checkbox"
+          v-model="checked_nodisplay_message"
+        /><label for="check_nodisplay">今後このメッセージを表示しない</label>
+      </div>
+    </div>
+  </div>
+  <div class="actionArea">
+    <a @click="activeSaveModal = false" class="md_btn md_btn--whiteLine"
+      >キャンセル</a
+    ><a @click="all_save" class="md_btn">保存する</a>
+  </div>
+</div>
+,
+<div class="cardContent">
+  <p style="line-height: 150%">
+    検索条件を保存しました。<br />この条件で新着メールを送信します。
+  </p>
+</div>
+,
+<div class="cardContent">
+  <div class="contentArea">
+    <div class="catch">検索範囲</div>
+    <div class="formSet formSet--distance">
+      <div class="copy">
+        <span class="area">{{getLocationText(selectedLocation)}}</span>から
+      </div>
+      <div class="formSection">
+        <div class="data">
+          <span class="num">{{inputDist.distNum}}</span
+          >{{inputDist.dunit}}以内<span class="sub"
+            ><span class="way">{{inputDist.way}}約</span
+            ><span class="subData">{{inputDist.minuteNum}}</span>分以内</span
+          >
+        </div>
+        <div class="form">
+          <label class="formWrap" for="range_distance">
+            <span class="distanceTxt distanceTxt--pre"
+              >{{distData[1].distNum + distData[1].dunit}}</span
+            ><!--
+    --><span class="inputSet js_rangeInput">
+              <input
+                :max="distSettingModal.max"
+                :min="distSettingModal.min"
+                :step="distSettingModal.step"
+                :style="distSliderStyle"
+                class="distanceRange"
+                id="range_distance"
+                type="range"
+                v-model="distSettingModal.sliderValue"
+              />
+              <div class="dotList">
+                <span
+                  :class="{'dot--active': (n &lt; distSliderIndex)}"
+                  class="dot"
+                  v-for="n in betweemDistDotNumber"
+                ></span>
+              </div> </span
+            ><!--
+    --><span class="distanceTxt distanceTxt--next"
+              >{{distData[distData.lastKey].distNum +
+              distData[distData.lastKey].dunit}}</span
+            >
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="actionArea">
+    <a @click="closeDistModal" class="md_btn md_btn--big md_btn--line js_modalX"
+      >キャンセル</a
+    >
+    <a
+      @click="setDistFromModal(distSliderIndex)"
+      class="md_btn md_btn--big md_btn--done js_modalX"
+      >設定</a
+    >
+  </div>
+</div>
+,
+<div class="cardContent">
+  <div class="contentArea">
+    <ul class="md_list md_list--arrow md_list--history">
+      <li class="row noHistory" v-if="history_id_list.length === 0">
+        <span class="list">
+          <div class="txtCell">
+            <span class="data">検索履歴はありません。</span>
+          </div>
+        </span>
+      </li>
+    </ul>
+  </div>
+  <div class="actionArea add-list">
+    <a class="more" href="https://en-gage.net/user/history_list/"
+      >検索履歴の一覧へ</a
+    >
+  </div>
+</div>
+,
+<div class="cardContent">
+  <div class="contentArea contentArea--center">
+    <div class="catch">
+      現在の検索条件の新着求人を<br class="spShow" />メールで受け取る
+    </div>
+  </div>
+  <div class="actionArea actionArea--center">
+    <p class="copy">
+      <em>{{ const_search_text }}</em
+      >の求人をお探しですか？メールアドレスを設定、検索条件を保存しておくことで、保存した条件に合った新着求人を受け取ることができます。
+    </p>
+    <a @click="openMailDoneModal" class="md_btn md_btn--big md_btn--newMail"
+      >メールで受け取る（無料）</a
+    >
+  </div>
+</div>
+,
+<div class="cardContent">
+  <div class="contentArea">
+    <div class="catch">保存条件のメール受信設定が上限に達しています。</div>
+    <div class="copy">
+      保存条件のメール受信設定は20件が上限です。<br />
+      この条件の新着求人メールを受け取りたい場合は、以下受信設定画面より設定して下さい。
+    </div>
+  </div>
+  <div class="actionArea">
+    <a class="md_btn" href="https://en-gage.net/user/setting/receive/"
+      >受信設定する</a
+    >
+  </div>
+</div>
+,
+<div class="cardContent">
+  <div class="contentArea contentArea--center">
+    <div class="catch">
+      現在の検索条件の新着求人を<br class="spShow" />メールで受け取る
+    </div>
+  </div>
+  <div class="actionArea actionArea--center">
+    <p class="copy">
+      <em>{{ const_search_text }}</em
+      >の求人をお探しですか？メールアドレスを設定、検索条件を保存しておくことで、保存した条件に合った新着求人を受け取ることができます。
+    </p>
+    <a @click="openMailDoneModal" class="md_btn md_btn--big md_btn--newMail"
+      >メールで受け取る（無料）</a
+    >
+  </div>
+</div>
+,
+<div class="cardContent">
+  <div class="contentArea">
+    <div class="catch">保存条件のメール受信設定が上限に達しています。</div>
+    <div class="copy">
+      保存条件のメール受信設定は20件が上限です。<br />
+      この条件の新着求人メールを受け取りたい場合は、以下受信設定画面より設定して下さい。
+    </div>
+  </div>
+  <div class="actionArea">
+    <a class="md_btn" href="https://en-gage.net/user/setting/receive/"
+      >受信設定する</a
+    >
+  </div>
+</div>
