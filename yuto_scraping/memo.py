@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+import pandas as pd
+import os
 
 def get_soup(url):
     try:
@@ -11,15 +13,21 @@ def get_soup(url):
         print(f"error fetching {url}: {e}")
         return None
 
+
+
 if __name__ == "__main__":
-    load_url = "https://xn--pckua2a7gp15o89zb.com/%E7%94%9F%E6%88%90AI%E3%81%AE%E4%BB%95%E4%BA%8B"
+    load_url = "https://furien.jp/projects/617941?utm_source=kyujinbox&utm_medium=cpc&utm_campaign=furien&argument=hGPKreyn&dmai=furien_kyujinbox"
     soup = get_soup(load_url)
     
-    topics = soup.find_all(class_="p-result_title_link s-biggerlink_link")
-    print(topics)
-    for j, topic in enumerate(topics, start=1):
-        # ここで find('a') を使用して、各 topic 内の最初の 'a' タグを取得します。
-        element = topic.find('a')
-        if element:
-            url = urljoin(load_url, element.get("href"))
-            print(f"Link {j}: {url}")
+    topic = soup.find("div", class_="job-card section-bottom")
+    #print(topic)
+    h3tag = topic.find("h3",class_="job-card__title text-br")
+    title = h3tag.find("span").text.strip()
+    print(title)
+    
+    
+    # for j, element in enumerate(topic.find_all("a"), start=1):
+    #     url = urljoin(load_url, element.get("href"))
+    #     if url!="javascript:void(0);":
+    #         extract_job_data(url)
+            
