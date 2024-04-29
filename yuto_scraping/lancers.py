@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import pandas as pd
 import os
+import time
 
 def get_soup(url):
     try:
@@ -57,10 +58,10 @@ def extract_job_data(url):
         print("エラーが発生しました:", e)
     except Exception as e:
         print("エラーが発生しました:", e)
-
+        
 if __name__ == "__main__":
     # ↓ランサーズの仕事一覧ページURL↓
-    load_url = "https://www.lancers.jp/work/search?open=1&ref=header_menu"
+    load_url = "https://www.lancers.jp/work/search/system?open=1&ref=header_menu&show_description=1&sort=client&work_rank%5B%5D=0&work_rank%5B%5D=2&work_rank%5B%5D=3"
     soup = get_soup(load_url)
     columns = ['求人タイトル', '求人募集のジャンル', '仕事内容', '給与', 'URL']
     csv_file = './yuto_scraping/job_listings.csv'
