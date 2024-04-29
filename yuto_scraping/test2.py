@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import pandas as pd
 import os
-import time
 
 def get_soup(url):
     try:
@@ -11,7 +10,7 @@ def get_soup(url):
         response.raise_for_status()
         return BeautifulSoup(response.text, 'html.parser')
     except requests.exceptions.RequestException as e:
-        print(f"error fetching {url}: {e}")
+        print(f"Error fetching {url}: {e}")
         return None
     
 def save_to_csv(df, csv_file):
@@ -31,7 +30,7 @@ def extract_job_data(url):
         job_list = []
         soup = get_soup(url)
         if not soup:
-            return
+            return None
         
         title = category = salary = job_desc = None
         
@@ -52,13 +51,10 @@ def extract_job_data(url):
                 
         if title and category and job_desc:
             job_list.append([title, category, job_desc, salary, url])
-        if job_list:
-            return job_list
-        else:
-            return None
+        return job_list
     
     except Exception as e:
-        print(f"エラーが発生しました: {url}, {e}")
+        print(f"Error processing {url}: {e}")
         return None
         
 def next_page(load_url, soup):
@@ -75,17 +71,18 @@ def next_page(load_url, soup):
 
 if __name__ == "__main__":
     csv_dir = './yuto_scraping'
-    csv_file = os.path.join(csv_dir, 'test.csv')
+    csv_file = os.path.join(csv_dir, 'listings_joblist.csv')
     
     if not os.path.exists(csv_dir):
         os.makedirs(csv_dir)
         
-    load_url = "https://www.lancers.jp/work/search/system?open=1&ref=header_menu&show_description=1&sort=client&work_rank%5B%5D=0&work_rank%5B%5D=2&work_rank%5B%5D=3"
+    load_url = "https://www.lancers.jp/work/search/salesmarketing?open=1&ref=header_menu&show_description=1&sort=client&work_rank%5B%5D=0&work_rank%5B%5D=2&work_rank%5B%5D=3"
     soup = get_soup(load_url)
     columns = ['求人タイトル', '求人募集のジャンル', '仕事内容', '給与', 'URL']
+    total_data_collected = 0
     
-    if soup:
-        for _ in range(5): 
+    while total_data_collected < 50:
+        if soup:
             topic = soup.find(class_="p-search-job__right")
             if topic:
                 for element in topic.find_all('a'):            
@@ -97,6 +94,12 @@ if __name__ == "__main__":
                         if job_data:
                             df = pd.DataFrame(job_data, columns=columns)
                             save_to_csv(df, csv_file)
+                            total_data_collected += len(df)
+                            if total_data_collected >= 50:
+                                print("Reached 50 data entries.")
+                                break
+        if total_data_collected < 50:
             soup, load_url = next_page(load_url, soup)
             if soup is None:
+                print("No more pages to scrape or failed to fetch next page.")
                 break
