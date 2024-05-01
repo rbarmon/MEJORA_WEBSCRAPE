@@ -33,25 +33,27 @@ def extract_job_data(url):
         if not soup:
             return
         
-        title = category = salary = job_desc = None
+        # 求人タイトル title ＆依頼者 requester ＆ 仕事内容(事業内容) category
+        title = soup.find("h1",class_="rn3-companyOfferHeader__heading").text.strip()
+        h3 = soup.find_all(class_="rn3-companyOfferCompany__info")
+        for i in h3:
+            element = i.find(class_="rn3-companyOfferCompany__heading").text.strip()
+            if element == "社名":
+                requester = i.find(class_="rn3-companyOfferCompany__text").text.strip()
+            if element == "事業内容":
+                category = i.find(class_="rn3-companyOfferCompany__text").text.strip()
         
-        h1tag = soup.find(class_="c-heading c-heading--lv1")
-        if h1tag:
-            category = h1tag.find("span").text.strip() if h1tag.find("span") else None
-            if h1tag.span:
-                h1tag.span.decompose()
-            title = h1tag.text.strip()
-        
-        dltag = soup.find_all("dl", class_='c-definition-list')
-        for dl in dltag:
-            dttag = dl.find("dt").text.strip()
-            if dttag == "提示した予算":
-                salary = dl.find("dd").text.strip()
-            if dttag == "依頼概要":
-                job_desc = dl.find("dd").text.strip()
+        # #仕事内容 job_desc ＆給与 salary
+        div = soup.find_all("div",class_='rn3-companyOfferRecruitment__info')
+        for j in div:
+            h3tag = j.find(class_="rn3-companyOfferRecruitment__heading").text.strip()
+            if h3tag == "仕事内容":
+                job_desc = j.find(class_="rn3-companyOfferRecruitment__text").text.strip()
+            if h3tag == "給与":
+                salary = j.find(class_="rn3-companyOfferRecruitment__text").text.strip()
                 
         if title and category and job_desc:
-            job_list.append([title, category, job_desc, salary, url])
+            job_list.append([title, category, requester, job_desc, salary, url])
         if job_list:
             return job_list
         else:
@@ -63,7 +65,7 @@ def extract_job_data(url):
         
 def next_page(load_url, soup):
     try:
-        next_page_element = soup.find(class_="c-pager__item c-pager__item--next").find("a")
+        next_page_element = soup.find(class_="rnn-pagination__next").find("a")
         if next_page_element:
             url = urljoin(load_url, next_page_element.get("href"))
             return get_soup(url), url
@@ -80,18 +82,19 @@ if __name__ == "__main__":
     if not os.path.exists(csv_dir):
         os.makedirs(csv_dir)
         
-    load_url = "https://www.lancers.jp/work/search/system?open=1&ref=header_menu&show_description=1&sort=client&work_rank%5B%5D=0&work_rank%5B%5D=2&work_rank%5B%5D=3"
+    load_url = "https://next.rikunabi.com/rnc/docs/cp_s00700.jsp?leadtc=n_ichiran_panel_submit_btn"
     soup = get_soup(load_url)
-    columns = ['求人タイトル', '求人募集のジャンル', '仕事内容', '給与', 'URL']
-    
+    columns = ['求人タイトル', '求人募集のジャンル', '依頼者', '仕事内容', '給与', 'URL']
+    count =0
     if soup:
         for _ in range(5): 
-            topic = soup.find(class_="p-search-job__right")
+            topic = soup.find(class_="rnn-group rnn-group--xm")
             if topic:
                 for element in topic.find_all('a'):            
                     url = urljoin(load_url, element.get("href"))
                     urls = list(url.split('/'))
-                    if urls[-2] == "detail":
+                    count += 1
+                    if urls[3]=="viewjob" and count % 3 ==0:
                         print(f"Scraping: {url}")
                         job_data = extract_job_data(url)
                         if job_data:
